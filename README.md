@@ -13,10 +13,12 @@ A widget to apply a crossfade animation between different states and/or widgets.
 Additionally it's really easy to use and efficient.
 
 ## Examples
+![cross_fade_example_1](https://user-images.githubusercontent.com/43761463/155771555-c75a93a1-e1b4-4db1-b5e8-60652364f681.gif)
+![cross_fade_example_2](https://user-images.githubusercontent.com/43761463/155771978-0f713562-e10f-494a-a1dd-ec3289bbd7aa.gif)  
+![cross_fade_example_3](https://user-images.githubusercontent.com/43761463/155770913-83c59115-cb9e-40a2-80aa-e21ad8c8816e.gif)
+
 
 ## Easy Usage
-
-Easy to use and highly customizable.
 
 ```dart
 CrossFade<int>(
