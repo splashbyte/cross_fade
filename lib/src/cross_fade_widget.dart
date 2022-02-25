@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CrossFade<T> extends StatefulWidget {
-  ///The current value
+  ///The current value.
   final T value;
 
   ///The builder which builds the different values during the animation.
@@ -28,7 +28,7 @@ class CrossFade<T> extends StatefulWidget {
   ///The alignment for the children of the underlying stack.
   final AlignmentGeometry stackAlignment;
 
-  ///The default constructor of [CrossFade]
+  ///The default constructor of [CrossFade].
   const CrossFade({
     Key? key,
     this.duration = const Duration(milliseconds: 750),
