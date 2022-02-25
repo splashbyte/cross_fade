@@ -1,10 +1,10 @@
 name: cross_fade
 description: A widget to apply a crossfade animation between different states and/or widgets.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/SplashByte/cross_fade
 
 environment:
-  sdk: ">=2.16.1 <3.0.0"
+  sdk: ">=2.16.0 <3.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
