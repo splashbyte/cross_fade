@@ -8,6 +8,7 @@ class CustomAnimatedSize extends StatefulWidget {
   final Duration duration;
   final Curve curve;
   final Widget child;
+  final AlignmentGeometry alignment;
 
   const CustomAnimatedSize({
     Key? key,
@@ -15,6 +16,7 @@ class CustomAnimatedSize extends StatefulWidget {
     required this.duration,
     this.curve = Curves.linear,
     required this.child,
+    this.alignment = Alignment.center,
   }) : super(key: key);
 
   @override
@@ -32,6 +34,7 @@ class _CustomAnimatedSizeState extends State<CustomAnimatedSize> {
       clipBehavior: widget.clipBehavior,
       duration: widget.duration,
       curve: widget.curve,
+      alignment: widget.alignment,
       child: child,
     );
   }
