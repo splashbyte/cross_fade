@@ -111,18 +111,18 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
     super.initState();
     _todo = [widget.value];
     _opacityController =
-    AnimationController(vsync: this, duration: widget.duration, value: 1.0)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (_todo.length <= 1) return;
-          _todo.removeAt(0);
-          // rebuild necessary for setting GlobalKeys simultaneously
-          setState(() {});
-          if (_todo.length > 1) {
-            _animateNext();
-          }
-        }
-      });
+        AnimationController(vsync: this, duration: widget.duration, value: 1.0)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              if (_todo.length <= 1) return;
+              _todo.removeAt(0);
+              // rebuild necessary for setting GlobalKeys simultaneously
+              setState(() {});
+              if (_todo.length > 1) {
+                _animateNext();
+              }
+            }
+          });
 
     _sizeController = AnimationController(
         vsync: this,
@@ -199,6 +199,7 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
   Widget build(BuildContext context) {
     bool twoActive = _todo.length > 1;
     T current = twoActive ? _todo[1] : _todo[0];
+    T first = _todo[0];
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         fit: StackFit.passthrough,
@@ -223,8 +224,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
                         child: child,
                       ),
                       child: EmptyWidget(
-                          key: _getKey(_todo[0]),
-                          child: widget.builder(context, _todo[0])),
+                          key: _getKey(first),
+                          child: widget.builder(context, first)),
                     ),
                   ),
                 ),
@@ -241,6 +242,7 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
               clipBehavior: widget.clipBehavior,
               duration: widget.sizeDuration ?? widget.duration,
               curve: widget.sizeCurve,
+              alignment: widget.stackAlignment,
               child: AnimatedBuilder(
                 animation: _opacityAnimation,
                 builder: (context, child) => Opacity(

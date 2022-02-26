@@ -1,6 +1,6 @@
 name: cross_fade
 description: A widget to apply a crossfade animation between different states and/or widgets.
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/SplashByte/cross_fade
 
 environment:

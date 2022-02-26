@@ -1,3 +1,6 @@
+## 0.3.1 [2022-02-26]
+- fixes alignment
+
 ## 0.3.0 [2022-02-26]
 - adds parameters for manipulating size animation
 - enables disabling of size animation for performance reasons
