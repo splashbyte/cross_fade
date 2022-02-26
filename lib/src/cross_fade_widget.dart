@@ -25,7 +25,7 @@ class CrossFade<T> extends StatefulWidget {
   /// The maximum scale during the highlight animation.
   final double highlightScale;
 
-  /// The duration of the highlight animation.
+  /// The duration of the whole highlight animation.
   final Duration highlightDuration;
 
   /// The alignment for the children of the underlying stack.
@@ -36,6 +36,20 @@ class CrossFade<T> extends StatefulWidget {
   /// widgets like [ClipRRect] or [Container] and their [clipBehaviour].
   final Clip clipBehaviour;
 
+  /// Curve of the fading in animation.
+  final Curve curve;
+
+  /// Curve of the fading out animation. Defaults to [curve.flipped].
+  final Curve? disappearingCurve;
+
+  /// Curve of the highlighting animation.
+  final Curve highlightingCurve;
+
+  /// Reverse curve of the highlighting animation.
+  /// Defaults to [highlightingCurve.flipped].
+  final Curve? highlightingReverseCurve;
+
+  // const constructor doesn't make sense here
   /// The default constructor of [CrossFade].
   const CrossFade({
     Key? key,
@@ -48,6 +62,10 @@ class CrossFade<T> extends StatefulWidget {
     this.highlightScale = 1.2,
     this.highlightDuration = const Duration(milliseconds: 750),
     this.clipBehaviour = Clip.none,
+    this.curve = Curves.easeIn,
+    this.disappearingCurve,
+    this.highlightingCurve = Curves.ease,
+    this.highlightingReverseCurve,
   }) : super(key: key);
 
   static bool _defaultEquals(dynamic t1, dynamic t2) => t1 == t2;
@@ -63,8 +81,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
   late final List<T> _todo;
   late final AnimationController _opacityController;
   late final AnimationController _sizeController;
-  late final Animation<double> _opacityAnimation;
-  late final Animation<double> _sizeAnimation;
+  late final CurvedAnimation _opacityAnimation;
+  late final CurvedAnimation _sizeAnimation;
   final UniqueKey _stateKey = UniqueKey();
   final UniqueKey _animatedSizeKey = UniqueKey();
 
@@ -73,50 +91,44 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
     super.initState();
     _todo = [widget.value];
     _opacityController =
-        AnimationController(vsync: this, duration: widget.duration, value: 1.0)
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              if (_todo.length <= 1) return;
-              _todo.removeAt(0);
-              // rebuild necessary for setting GlobalKeys simultaneously
-              setState(() {});
-              if (_todo.length > 1) {
-                _animateNext();
-              }
-            }
-          });
+    AnimationController(vsync: this, duration: widget.duration, value: 1.0)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          if (_todo.length <= 1) return;
+          _todo.removeAt(0);
+          // rebuild necessary for setting GlobalKeys simultaneously
+          setState(() {});
+          if (_todo.length > 1) {
+            _animateNext();
+          }
+        }
+      });
 
-    _sizeController =
-        AnimationController(vsync: this, duration: widget.highlightDuration);
+    _sizeController = AnimationController(
+        vsync: this, duration: widget.highlightDuration * 0.5)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _sizeController.reverse();
+        }
+      });
 
     _opacityAnimation = CurvedAnimation(
       parent: _opacityController,
-      curve: Curves.easeIn,
+      curve: widget.curve,
+      reverseCurve: widget.disappearingCurve,
     );
 
-    _sizeAnimation = TweenSequence<double>(
-      <TweenSequenceItem<double>>[
-        TweenSequenceItem<double>(
-          tween: ConstantTween<double>(0.0),
-          weight: 25.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: Tween<double>(begin: 0.0, end: 1.0)
-              .chain(CurveTween(curve: Curves.ease)),
-          weight: 50.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: Tween<double>(begin: 1.0, end: 0.0)
-              .chain(CurveTween(curve: Curves.ease.flipped)),
-          weight: 50.0,
-        ),
-      ],
-    ).animate(_sizeController);
+    _sizeAnimation = CurvedAnimation(
+      parent: _sizeController,
+      curve: widget.highlightingCurve,
+      reverseCurve: widget.highlightingReverseCurve,
+    );
   }
 
   @override
   void dispose() {
     _opacityController.dispose();
+    _sizeController.dispose();
     super.dispose();
   }
 
@@ -137,14 +149,26 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
       _opacityController.duration = widget.duration;
     }
     if (oldWidget.highlightDuration != widget.highlightDuration) {
-      _sizeController.duration = widget.highlightDuration;
+      _sizeController.duration = widget.highlightDuration * 0.5;
+    }
+    if (oldWidget.curve != widget.curve) {
+      _opacityAnimation.curve = widget.curve;
+    }
+    if (oldWidget.disappearingCurve != widget.disappearingCurve) {
+      _opacityAnimation.reverseCurve = widget.disappearingCurve;
+    }
+    if (oldWidget.highlightingCurve != widget.highlightingCurve) {
+      _sizeAnimation.curve = widget.highlightingCurve;
+    }
+    if (oldWidget.highlightingReverseCurve != widget.highlightingReverseCurve) {
+      _sizeAnimation.reverseCurve = widget.highlightingReverseCurve;
     }
   }
 
   void _animateNext() {
     if (_todo.length < 2) return;
     if (widget.highlightTransition.call(_todo[0], _todo[1])) {
-      _sizeController.forward(from: 0.0);
+      _sizeController.forward();
     }
     _opacityController.forward(from: 0.0);
   }
@@ -226,10 +250,10 @@ class _LocalKey<T> extends GlobalKey {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _LocalKey<T> &&
-          runtimeType == other.runtimeType &&
-          stateKey == other.stateKey &&
-          equals(value, other.value);
+          other is _LocalKey<T> &&
+              runtimeType == other.runtimeType &&
+              stateKey == other.stateKey &&
+              equals(value, other.value);
 
   // Because of the customizable equals method, the hashcode of value cannot
   // be used here without the risk of a falsely unequal hashcode.
