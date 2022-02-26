@@ -1,34 +1,42 @@
 import 'package:flutter/material.dart';
 
+import 'custom_clip_rect.dart';
+import 'empty_widget.dart';
+
 class CrossFade<T> extends StatefulWidget {
-  ///The current value.
+  /// The current value.
   final T value;
 
-  ///The builder which builds the different values during the animation.
+  /// The builder which builds the different values during the animation.
   final Widget Function(BuildContext, T) builder;
 
-  ///The duration of the fading.
+  /// The duration of the fading.
   final Duration duration;
 
-  ///The overriding of the equals function.
-  ///[CrossFade] only animates between two different values
-  ///if [equals] returns [false] for these two.
+  /// The overriding of the equals function.
+  /// [CrossFade] only animates between two different values
+  /// if [equals] returns [false] for these two.
   final bool Function(T, T) equals;
 
-  ///[CrossFade] only highlights the new value during the animation
-  ///if [highlightTransition] returns [true].
+  /// [CrossFade] only highlights the new value during the animation
+  /// if [highlightTransition] returns [true].
   final bool Function(T, T) highlightTransition;
 
-  ///The maximum scale during the highlight animation.
+  /// The maximum scale during the highlight animation.
   final double highlightScale;
 
-  ///The duration of the highlight animation.
+  /// The duration of the highlight animation.
   final Duration highlightDuration;
 
-  ///The alignment for the children of the underlying stack.
+  /// The alignment for the children of the underlying stack.
   final AlignmentGeometry stackAlignment;
 
-  ///The default constructor of [CrossFade].
+  /// The clip behaviour for clipping while the size animation.
+  /// For more customization like BorderRadius or similar please use
+  /// widgets like [ClipRRect] or [Container] and their [clipBehaviour].
+  final Clip clipBehaviour;
+
+  /// The default constructor of [CrossFade].
   const CrossFade({
     Key? key,
     this.duration = const Duration(milliseconds: 750),
@@ -39,6 +47,7 @@ class CrossFade<T> extends StatefulWidget {
     this.stackAlignment = AlignmentDirectional.center,
     this.highlightScale = 1.2,
     this.highlightDuration = const Duration(milliseconds: 750),
+    this.clipBehaviour = Clip.none,
   }) : super(key: key);
 
   static bool _defaultEquals(dynamic t1, dynamic t2) => t1 == t2;
@@ -69,6 +78,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
             if (status == AnimationStatus.completed) {
               if (_todo.length <= 1) return;
               _todo.removeAt(0);
+              // rebuild necessary for setting GlobalKeys simultaneously
+              setState(() {});
               if (_todo.length > 1) {
                 _animateNext();
               }
@@ -140,28 +151,36 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
 
   @override
   Widget build(BuildContext context) {
-    T current = _todo.length > 1 ? _todo[1] : _todo[0];
+    bool twoActive = _todo.length > 1;
+    T current = twoActive ? _todo[1] : _todo[0];
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         fit: StackFit.passthrough,
         alignment: widget.stackAlignment,
         children: [
-          if (_todo.length > 1)
+          if (twoActive)
             Positioned.fill(
-              child: OverflowBox(
-                alignment: widget.stackAlignment,
-                minWidth: constraints.minWidth,
-                maxWidth: constraints.maxWidth,
-                minHeight: constraints.minHeight,
-                maxHeight: constraints.maxHeight,
-                child: AnimatedBuilder(
-                  animation: _opacityAnimation,
-                  builder: (context, child) => Opacity(
-                    key: getKey(_todo[0]),
-                    opacity: 1 - _opacityAnimation.value,
-                    child: child,
+              child: CustomClipRect(
+                clipBehaviour: widget.clipBehaviour,
+                child: OverflowBox(
+                  alignment: widget.stackAlignment,
+                  minWidth: constraints.minWidth,
+                  maxWidth: constraints.maxWidth,
+                  minHeight: constraints.minHeight,
+                  maxHeight: constraints.maxHeight,
+                  child: ConstrainedBox(
+                    constraints: constraints,
+                    child: AnimatedBuilder(
+                      animation: _opacityAnimation,
+                      builder: (context, child) => Opacity(
+                        opacity: 1 - _opacityAnimation.value,
+                        child: child,
+                      ),
+                      child: EmptyWidget(
+                          key: _getKey(_todo[0]),
+                          child: widget.builder(context, _todo[0])),
+                    ),
                   ),
-                  child: widget.builder(context, _todo[0]),
                 ),
               ),
             ),
@@ -173,16 +192,17 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
               child: child,
             ),
             child: AnimatedSize(
-              clipBehavior: Clip.none,
+              clipBehavior: widget.clipBehaviour,
               duration: widget.duration,
               child: AnimatedBuilder(
                 animation: _opacityAnimation,
                 builder: (context, child) => Opacity(
-                  key: getKey(current),
                   opacity: _opacityAnimation.value,
                   child: child,
                 ),
-                child: widget.builder(context, current),
+                child: EmptyWidget(
+                    key: _getKey(current),
+                    child: widget.builder(context, current)),
               ),
             ),
           ),
@@ -191,23 +211,28 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
     );
   }
 
-  _LocalKey<T> getKey(T value) => _LocalKey(_stateKey, value);
+  _LocalKey<T> _getKey(T value) => _LocalKey(_stateKey, value, _equals);
+
+  bool _equals(T t1, T t2) => widget.equals(t1, t2);
 }
 
-class _LocalKey<T> extends LocalKey {
+class _LocalKey<T> extends GlobalKey {
   final Key stateKey;
   final T value;
+  final bool Function(T t1, T t2) equals;
 
-  const _LocalKey(this.stateKey, this.value);
+  const _LocalKey(this.stateKey, this.value, this.equals) : super.constructor();
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _LocalKey &&
+      other is _LocalKey<T> &&
           runtimeType == other.runtimeType &&
           stateKey == other.stateKey &&
-          value == other.value;
+          equals(value, other.value);
 
+  // Because of the customizable equals method, the hashcode of value cannot
+  // be used here without the risk of a falsely unequal hashcode.
   @override
-  int get hashCode => stateKey.hashCode ^ value.hashCode;
+  int get hashCode => stateKey.hashCode;
 }
