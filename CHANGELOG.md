@@ -1,3 +1,7 @@
+## 0.3.0 [2022-02-26]
+- adds parameters for manipulating size animation
+- enables disabling of size animation for performance reasons
+
 ## 0.2.1 [2022-02-25]
 - adds curve parameters
 
