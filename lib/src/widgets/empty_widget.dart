@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-///Mainly intended to hold a key.
+/// Mainly intended to hold a key.
 class EmptyWidget extends StatelessWidget {
   final Widget child;
 

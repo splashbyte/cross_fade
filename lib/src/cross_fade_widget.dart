@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'custom_clip_rect.dart';
-import 'empty_widget.dart';
+import 'widgets/animated_size.dart';
+import 'widgets/clip_rect.dart';
+import 'widgets/empty_widget.dart';
 
+/// A widget to apply a crossfade animation
+/// between different states and/or widgets.
 class CrossFade<T> extends StatefulWidget {
   /// The current value.
   final T value;
@@ -25,16 +28,16 @@ class CrossFade<T> extends StatefulWidget {
   /// The maximum scale during the highlight animation.
   final double highlightScale;
 
-  /// The duration of the whole highlight animation.
-  final Duration highlightDuration;
+  /// The duration of the whole highlight animation. Defaults to [duration].
+  final Duration? highlightDuration;
 
   /// The alignment for the children of the underlying stack.
   final AlignmentGeometry stackAlignment;
 
   /// The clip behaviour for clipping while the size animation.
   /// For more customization like BorderRadius or similar please use
-  /// widgets like [ClipRRect] or [Container] and their [clipBehaviour].
-  final Clip clipBehaviour;
+  /// widgets like [ClipRRect] or [Container] and their [clipBehavior].
+  final Clip clipBehavior;
 
   /// Curve of the fading in animation.
   final Curve curve;
@@ -49,8 +52,23 @@ class CrossFade<T> extends StatefulWidget {
   /// Defaults to [highlightingCurve.flipped].
   final Curve? highlightingReverseCurve;
 
+  /// Curve of the size animation.
+  ///
+  /// If you want to disable the size animation for performance reasons,
+  /// set [sizeDuration] to [Duration.zero].
+  final Curve sizeCurve;
+
+  /// Duration of the size animation. Defaults to [duration].
+  ///
+  /// If you want to disable the size animation for performance reasons,
+  /// set [sizeDuration] to [Duration.zero].
+  final Duration? sizeDuration;
+
   // const constructor doesn't make sense here
   /// The default constructor of [CrossFade].
+  ///
+  /// If you want to disable the size animation for performance reasons,
+  /// set [sizeDuration] to [Duration.zero].
   const CrossFade({
     Key? key,
     this.duration = const Duration(milliseconds: 750),
@@ -60,12 +78,14 @@ class CrossFade<T> extends StatefulWidget {
     this.highlightTransition = _defaultHighlightTransition,
     this.stackAlignment = AlignmentDirectional.center,
     this.highlightScale = 1.2,
-    this.highlightDuration = const Duration(milliseconds: 750),
-    this.clipBehaviour = Clip.none,
+    this.highlightDuration,
+    this.clipBehavior = Clip.none,
     this.curve = Curves.easeIn,
     this.disappearingCurve,
     this.highlightingCurve = Curves.ease,
     this.highlightingReverseCurve,
+    this.sizeCurve = Curves.linear,
+    this.sizeDuration,
   }) : super(key: key);
 
   static bool _defaultEquals(dynamic t1, dynamic t2) => t1 == t2;
@@ -105,7 +125,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
       });
 
     _sizeController = AnimationController(
-        vsync: this, duration: widget.highlightDuration * 0.5)
+        vsync: this,
+        duration: (widget.highlightDuration ?? widget.duration) * 0.5)
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           _sizeController.reverse();
@@ -149,7 +170,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
       _opacityController.duration = widget.duration;
     }
     if (oldWidget.highlightDuration != widget.highlightDuration) {
-      _sizeController.duration = widget.highlightDuration * 0.5;
+      _sizeController.duration =
+          (widget.highlightDuration ?? widget.duration) * 0.5;
     }
     if (oldWidget.curve != widget.curve) {
       _opacityAnimation.curve = widget.curve;
@@ -185,7 +207,7 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
           if (twoActive)
             Positioned.fill(
               child: CustomClipRect(
-                clipBehaviour: widget.clipBehaviour,
+                clipBehavior: widget.clipBehavior,
                 child: OverflowBox(
                   alignment: widget.stackAlignment,
                   minWidth: constraints.minWidth,
@@ -215,9 +237,10 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
               scale: 1.0 + (widget.highlightScale - 1.0) * _sizeAnimation.value,
               child: child,
             ),
-            child: AnimatedSize(
-              clipBehavior: widget.clipBehaviour,
-              duration: widget.duration,
+            child: CustomAnimatedSize(
+              clipBehavior: widget.clipBehavior,
+              duration: widget.sizeDuration ?? widget.duration,
+              curve: widget.sizeCurve,
               child: AnimatedBuilder(
                 animation: _opacityAnimation,
                 builder: (context, child) => Opacity(
@@ -250,10 +273,10 @@ class _LocalKey<T> extends GlobalKey {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is _LocalKey<T> &&
-              runtimeType == other.runtimeType &&
-              stateKey == other.stateKey &&
-              equals(value, other.value);
+      other is _LocalKey<T> &&
+          runtimeType == other.runtimeType &&
+          stateKey == other.stateKey &&
+          equals(value, other.value);
 
   // Because of the customizable equals method, the hashcode of value cannot
   // be used here without the risk of a falsely unequal hashcode.
