@@ -17,7 +17,7 @@ class CrossFade<T> extends StatefulWidget {
   final Duration duration;
 
   /// The overriding of the equals function.
-  /// [CrossFade] only animates between two different values
+  /// [CrossFade] only animates and switches between two different values
   /// if [equals] returns [false] for these two.
   final bool Function(T, T) equals;
 
@@ -64,7 +64,6 @@ class CrossFade<T> extends StatefulWidget {
   /// set [sizeDuration] to [Duration.zero].
   final Duration? sizeDuration;
 
-  // const constructor doesn't make sense here
   /// The default constructor of [CrossFade].
   ///
   /// If you want to disable the size animation for performance reasons,
@@ -98,26 +97,23 @@ class CrossFade<T> extends StatefulWidget {
 
 class _CrossFadeState<T> extends State<CrossFade<T>>
     with TickerProviderStateMixin {
-  late final List<T> _todo;
+  late final List<_ValueKeyPair<T>> _todo;
   late final AnimationController _opacityController;
   late final AnimationController _sizeController;
   late final CurvedAnimation _opacityAnimation;
   late final CurvedAnimation _sizeAnimation;
-  final UniqueKey _stateKey = UniqueKey();
   final UniqueKey _animatedSizeKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
-    _todo = [widget.value];
+    _todo = [_pairByValue(widget.value)];
     _opacityController =
         AnimationController(vsync: this, duration: widget.duration, value: 1.0)
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed) {
               if (_todo.length <= 1) return;
-              _todo.removeAt(0);
-              // rebuild necessary for setting GlobalKeys simultaneously
-              setState(() {});
+              setState(() => _todo.removeAt(0));
               if (_todo.length > 1) {
                 _animateNext();
               }
@@ -146,6 +142,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
     );
   }
 
+  _ValueKeyPair<T> _pairByValue(T value) => _ValueKeyPair(value, GlobalKey());
+
   @override
   void dispose() {
     _opacityController.dispose();
@@ -158,38 +156,29 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
     super.didUpdateWidget(oldWidget);
     if (!widget.equals(oldWidget.value, widget.value)) {
       if (_todo.length < 3) {
-        _todo.add(widget.value);
+        _todo.add(_pairByValue(widget.value));
       } else {
-        _todo[_todo.length - 1] = widget.value;
+        _todo[_todo.length - 1] = _pairByValue(widget.value);
       }
       if (!_opacityController.isAnimating) {
         _animateNext();
       }
+    } else {
+      _todo[_todo.length - 1] =
+          _todo[_todo.length - 1].copyWithValue(widget.value);
     }
-    if (oldWidget.duration != widget.duration) {
-      _opacityController.duration = widget.duration;
-    }
-    if (oldWidget.highlightDuration != widget.highlightDuration) {
-      _sizeController.duration =
-          (widget.highlightDuration ?? widget.duration) * 0.5;
-    }
-    if (oldWidget.curve != widget.curve) {
-      _opacityAnimation.curve = widget.curve;
-    }
-    if (oldWidget.disappearingCurve != widget.disappearingCurve) {
-      _opacityAnimation.reverseCurve = widget.disappearingCurve;
-    }
-    if (oldWidget.highlightingCurve != widget.highlightingCurve) {
-      _sizeAnimation.curve = widget.highlightingCurve;
-    }
-    if (oldWidget.highlightingReverseCurve != widget.highlightingReverseCurve) {
-      _sizeAnimation.reverseCurve = widget.highlightingReverseCurve;
-    }
+    _opacityController.duration = widget.duration;
+    _sizeController.duration =
+        (widget.highlightDuration ?? widget.duration) * 0.5;
+    _opacityAnimation.curve = widget.curve;
+    _opacityAnimation.reverseCurve = widget.disappearingCurve;
+    _sizeAnimation.curve = widget.highlightingCurve;
+    _sizeAnimation.reverseCurve = widget.highlightingReverseCurve;
   }
 
   void _animateNext() {
     if (_todo.length < 2) return;
-    if (widget.highlightTransition.call(_todo[0], _todo[1])) {
+    if (widget.highlightTransition.call(_todo[0].value, _todo[1].value)) {
       _sizeController.forward();
     }
     _opacityController.forward(from: 0.0);
@@ -198,8 +187,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
   @override
   Widget build(BuildContext context) {
     bool twoActive = _todo.length > 1;
-    T current = twoActive ? _todo[1] : _todo[0];
-    T first = _todo[0];
+    final current = twoActive ? _todo[1] : _todo[0];
+    final first = _todo[0];
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         fit: StackFit.passthrough,
@@ -215,18 +204,15 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
                   maxWidth: constraints.maxWidth,
                   minHeight: constraints.minHeight,
                   maxHeight: constraints.maxHeight,
-                  child: ConstrainedBox(
-                    constraints: constraints,
-                    child: AnimatedBuilder(
-                      animation: _opacityAnimation,
-                      builder: (context, child) => Opacity(
-                        opacity: 1 - _opacityAnimation.value,
-                        child: child,
-                      ),
-                      child: EmptyWidget(
-                          key: _getKey(first),
-                          child: widget.builder(context, first)),
+                  child: AnimatedBuilder(
+                    animation: _opacityAnimation,
+                    builder: (context, child) => Opacity(
+                      opacity: 1 - _opacityAnimation.value,
+                      child: child,
                     ),
+                    child: EmptyWidget(
+                        key: first.key,
+                        child: widget.builder(context, first.value)),
                   ),
                 ),
               ),
@@ -250,8 +236,8 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
                   child: child,
                 ),
                 child: EmptyWidget(
-                    key: _getKey(current),
-                    child: widget.builder(context, current)),
+                    key: current.key,
+                    child: widget.builder(context, current.value)),
               ),
             ),
           ),
@@ -259,29 +245,13 @@ class _CrossFadeState<T> extends State<CrossFade<T>>
       ),
     );
   }
-
-  _LocalKey<T> _getKey(T value) => _LocalKey(_stateKey, value, _equals);
-
-  bool _equals(T t1, T t2) => widget.equals(t1, t2);
 }
 
-class _LocalKey<T> extends GlobalKey {
-  final Key stateKey;
+class _ValueKeyPair<T> {
   final T value;
-  final bool Function(T t1, T t2) equals;
+  final Key key;
 
-  const _LocalKey(this.stateKey, this.value, this.equals) : super.constructor();
+  _ValueKeyPair(this.value, this.key);
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _LocalKey<T> &&
-          runtimeType == other.runtimeType &&
-          stateKey == other.stateKey &&
-          equals(value, other.value);
-
-  // Because of the customizable equals method, the hashcode of value cannot
-  // be used here without the risk of a falsely unequal hashcode.
-  @override
-  int get hashCode => stateKey.hashCode;
+  _ValueKeyPair<T> copyWithValue(T value) => _ValueKeyPair(value, key);
 }

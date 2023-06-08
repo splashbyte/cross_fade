@@ -1,3 +1,6 @@
+## 0.3.2 [2022-02-27]
+- removes redundant code
+
 ## 0.3.1 [2022-02-26]
 - fixes alignment
 
