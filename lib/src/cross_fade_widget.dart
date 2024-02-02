@@ -106,7 +106,8 @@ class CrossFade<T> extends StatelessWidget {
         disappearingCurve: disappearingCurve,
         highlightingCurve: highlightingCurve,
         highlightingReverseCurve: highlightingReverseCurve,
-        transitionBuilder: (context, previousChild, child, previous, current, animation) {
+        transitionBuilder:
+            (context, previousChild, child, previous, current, animation) {
           return LayoutBuilder(
             builder: (context, constraints) => Stack(
               fit: StackFit.passthrough,

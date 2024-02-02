@@ -43,7 +43,12 @@ class WidgetTransition<T> extends StatefulWidget {
   final Curve? highlightingReverseCurve;
 
   /// Transition of the animation. [previous] and [previousChild] are [null] if no transition is currently in progress.
-  final Widget Function(BuildContext context, Widget? previousChild, Widget child, T? previous, T current,
+  final Widget Function(
+      BuildContext context,
+      Widget? previousChild,
+      Widget child,
+      T? previous,
+      T current,
       Animation<double> animation) transitionBuilder;
 
   // const constructor doesn't make sense here
@@ -75,7 +80,8 @@ class WidgetTransition<T> extends StatefulWidget {
   _WidgetTransitionState<T> createState() => _WidgetTransitionState<T>();
 }
 
-class _WidgetTransitionState<T> extends State<WidgetTransition<T>> with TickerProviderStateMixin {
+class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
+    with TickerProviderStateMixin {
   late final List<T> _todo;
   late final AnimationController _opacityController;
   late final AnimationController _sizeController;
@@ -87,20 +93,23 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>> with TickerPr
   void initState() {
     super.initState();
     _todo = [widget.value];
-    _opacityController = AnimationController(vsync: this, duration: widget.duration, value: 1.0)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (_todo.length <= 1) return;
-          _todo.removeAt(0);
-          // rebuild necessary for setting GlobalKeys simultaneously
-          setState(() {});
-          if (_todo.length > 1) {
-            _animateNext();
-          }
-        }
-      });
+    _opacityController =
+        AnimationController(vsync: this, duration: widget.duration, value: 1.0)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              if (_todo.length <= 1) return;
+              _todo.removeAt(0);
+              // rebuild necessary for setting GlobalKeys simultaneously
+              setState(() {});
+              if (_todo.length > 1) {
+                _animateNext();
+              }
+            }
+          });
 
-    _sizeController = AnimationController(vsync: this, duration: (widget.highlightDuration ?? widget.duration) * 0.5)
+    _sizeController = AnimationController(
+        vsync: this,
+        duration: (widget.highlightDuration ?? widget.duration) * 0.5)
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           _sizeController.reverse();
@@ -146,7 +155,8 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>> with TickerPr
       _opacityController.duration = widget.duration;
     }
     if (oldWidget.highlightDuration != widget.highlightDuration) {
-      _sizeController.duration = (widget.highlightDuration ?? widget.duration) * 0.5;
+      _sizeController.duration =
+          (widget.highlightDuration ?? widget.duration) * 0.5;
     }
     if (oldWidget.curve != widget.curve) {
       _transitionAnimation.curve = widget.curve;
@@ -177,16 +187,21 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>> with TickerPr
     final previous = twoActive ? _todo[0] : null;
     final child = AnimatedBuilder(
         animation: _highlightingAnimation,
-        child: EmptyWidget(key: _getKey(current), child: widget.builder(context, current)),
+        child: EmptyWidget(
+            key: _getKey(current), child: widget.builder(context, current)),
         builder: (context, child) {
           return Transform.scale(
-            scale: 1.0 + (widget.highlightScale - 1.0) * _highlightingAnimation.value,
+            scale: 1.0 +
+                (widget.highlightScale - 1.0) * _highlightingAnimation.value,
             child: child,
           );
         });
-    final previousChild =
-        previous == null ? null : EmptyWidget(key: _getKey(previous), child: widget.builder(context, previous));
-    return widget.transitionBuilder(context, previousChild, child, previous, current, _transitionAnimation);
+    final previousChild = previous == null
+        ? null
+        : EmptyWidget(
+            key: _getKey(previous), child: widget.builder(context, previous));
+    return widget.transitionBuilder(
+        context, previousChild, child, previous, current, _transitionAnimation);
   }
 
   _LocalKey<T> _getKey(T value) => _LocalKey(_stateKey, value, _equals);
