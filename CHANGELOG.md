@@ -1,3 +1,6 @@
+## 0.4.0 [2024-02-02]
+- introduces ``WidgetTransition`` for fully customizable transitions
+
 ## 0.3.1 [2022-02-26]
 - fixes alignment
 

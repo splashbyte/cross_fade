@@ -1,8 +1,8 @@
 <a href="https://pub.dev/packages/cross_fade"><img src="https://img.shields.io/pub/v/cross_fade.svg?style=flat?logo=dart" alt="pub.dev"></a>
 <a href="https://github.com/SplashByte/cross_fade"><img src="https://img.shields.io/static/v1?label=platform&message=flutter&color=1ebbfd" alt="github"></a>
-[![likes](https://badges.bar/cross_fade/likes)](https://pub.dev/packages/cross_fade/score)
-[![popularity](https://badges.bar/cross_fade/popularity)](https://pub.dev/packages/cross_fade/score)
-[![pub points](https://badges.bar/cross_fade/pub%20points)](https://pub.dev/packages/cross_fade/score)
+[![likes](https://img.shields.io/pub/likes/cross_fade)](https://pub.dev/packages/cross_fade/score)
+[![popularity](https://img.shields.io/pub/popularity/cross_fade)](https://pub.dev/packages/cross_fade/score)
+[![pub points](https://img.shields.io/pub/points/cross_fade)](https://pub.dev/packages/cross_fade/score)
 <a href="https://github.com/SplashByte/cross_fade/blob/main/LICENSE"><img src="https://img.shields.io/github/license/SplashByte/cross_fade.svg" alt="license"></a>
 
 [![buy me a coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/splashbyte)

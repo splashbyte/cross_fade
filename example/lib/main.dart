@@ -98,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 value: _objects[_index % _objects.length],
                 builder: (context, i) => Text(
                   '$i',
-                  style: theme.textTheme.headline1,
+                  style: theme.textTheme.displayLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
               value: _objects[_index % _objects.length],
               builder: (context, i) => Text(
                 '$i',
-                style: theme.textTheme.headline1,
+                style: theme.textTheme.displayLarge,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
               value: _objects[_index % _objects.length],
               builder: (context, i) => Text(
                 '$i',
-                style: theme.textTheme.headline1,
+                style: theme.textTheme.displayLarge,
                 textAlign: TextAlign.center,
               ),
               highlightTransition: (o1, o2) => true,

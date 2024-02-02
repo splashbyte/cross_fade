@@ -1,12 +1,12 @@
+import 'package:cross_fade/src/widget_transition.dart';
 import 'package:flutter/material.dart';
 
 import 'widgets/animated_size.dart';
 import 'widgets/clip_rect.dart';
-import 'widgets/empty_widget.dart';
 
 /// A widget to apply a crossfade animation
 /// between different states and/or widgets.
-class CrossFade<T> extends StatefulWidget {
+class CrossFade<T> extends StatelessWidget {
   /// The current value.
   final T value;
 
@@ -93,195 +93,66 @@ class CrossFade<T> extends StatefulWidget {
   static bool _defaultHighlightTransition(dynamic t1, dynamic t2) => false;
 
   @override
-  _CrossFadeState<T> createState() => _CrossFadeState<T>();
-}
-
-class _CrossFadeState<T> extends State<CrossFade<T>>
-    with TickerProviderStateMixin {
-  late final List<T> _todo;
-  late final AnimationController _opacityController;
-  late final AnimationController _sizeController;
-  late final CurvedAnimation _opacityAnimation;
-  late final CurvedAnimation _sizeAnimation;
-  final UniqueKey _stateKey = UniqueKey();
-  final UniqueKey _animatedSizeKey = UniqueKey();
-
-  @override
-  void initState() {
-    super.initState();
-    _todo = [widget.value];
-    _opacityController =
-        AnimationController(vsync: this, duration: widget.duration, value: 1.0)
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              if (_todo.length <= 1) return;
-              _todo.removeAt(0);
-              // rebuild necessary for setting GlobalKeys simultaneously
-              setState(() {});
-              if (_todo.length > 1) {
-                _animateNext();
-              }
-            }
-          });
-
-    _sizeController = AnimationController(
-        vsync: this,
-        duration: (widget.highlightDuration ?? widget.duration) * 0.5)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _sizeController.reverse();
-        }
-      });
-
-    _opacityAnimation = CurvedAnimation(
-      parent: _opacityController,
-      curve: widget.curve,
-      reverseCurve: widget.disappearingCurve,
-    );
-
-    _sizeAnimation = CurvedAnimation(
-      parent: _sizeController,
-      curve: widget.highlightingCurve,
-      reverseCurve: widget.highlightingReverseCurve,
-    );
-  }
-
-  @override
-  void dispose() {
-    _opacityController.dispose();
-    _sizeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant CrossFade<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.equals(oldWidget.value, widget.value)) {
-      if (_todo.length < 3) {
-        _todo.add(widget.value);
-      } else {
-        _todo[_todo.length - 1] = widget.value;
-      }
-      if (!_opacityController.isAnimating) {
-        _animateNext();
-      }
-    }
-    if (oldWidget.duration != widget.duration) {
-      _opacityController.duration = widget.duration;
-    }
-    if (oldWidget.highlightDuration != widget.highlightDuration) {
-      _sizeController.duration =
-          (widget.highlightDuration ?? widget.duration) * 0.5;
-    }
-    if (oldWidget.curve != widget.curve) {
-      _opacityAnimation.curve = widget.curve;
-    }
-    if (oldWidget.disappearingCurve != widget.disappearingCurve) {
-      _opacityAnimation.reverseCurve = widget.disappearingCurve;
-    }
-    if (oldWidget.highlightingCurve != widget.highlightingCurve) {
-      _sizeAnimation.curve = widget.highlightingCurve;
-    }
-    if (oldWidget.highlightingReverseCurve != widget.highlightingReverseCurve) {
-      _sizeAnimation.reverseCurve = widget.highlightingReverseCurve;
-    }
-  }
-
-  void _animateNext() {
-    if (_todo.length < 2) return;
-    if (widget.highlightTransition.call(_todo[0], _todo[1])) {
-      _sizeController.forward();
-    }
-    _opacityController.forward(from: 0.0);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    bool twoActive = _todo.length > 1;
-    T current = twoActive ? _todo[1] : _todo[0];
-    T first = _todo[0];
-    return LayoutBuilder(
-      builder: (context, constraints) => Stack(
-        fit: StackFit.passthrough,
-        alignment: widget.stackAlignment,
-        children: [
-          if (twoActive)
-            Positioned.fill(
-              child: CustomClipRect(
-                clipBehavior: widget.clipBehavior,
-                child: OverflowBox(
-                  alignment: widget.stackAlignment,
-                  minWidth: constraints.minWidth,
-                  maxWidth: constraints.maxWidth,
-                  minHeight: constraints.minHeight,
-                  maxHeight: constraints.maxHeight,
-                  child: ConstrainedBox(
-                    constraints: constraints,
-                    child: AnimatedBuilder(
-                      animation: _opacityAnimation,
-                      builder: (context, child) => Opacity(
-                        opacity: 1 - _opacityAnimation.value,
-                        child: child,
+    return WidgetTransition<T>(
+        value: value,
+        builder: builder,
+        duration: duration,
+        equals: equals,
+        highlightTransition: highlightTransition,
+        highlightScale: highlightScale,
+        highlightDuration: highlightDuration,
+        curve: curve,
+        disappearingCurve: disappearingCurve,
+        highlightingCurve: highlightingCurve,
+        highlightingReverseCurve: highlightingReverseCurve,
+        transitionBuilder: (context, previousChild, child, previous, current, animation) {
+          return LayoutBuilder(
+            builder: (context, constraints) => Stack(
+              fit: StackFit.passthrough,
+              alignment: stackAlignment,
+              children: [
+                if (previousChild != null)
+                  Positioned.fill(
+                    child: CustomClipRect(
+                      clipBehavior: clipBehavior,
+                      child: OverflowBox(
+                        alignment: stackAlignment,
+                        minWidth: constraints.minWidth,
+                        maxWidth: constraints.maxWidth,
+                        minHeight: constraints.minHeight,
+                        maxHeight: constraints.maxHeight,
+                        child: ConstrainedBox(
+                          constraints: constraints,
+                          child: AnimatedBuilder(
+                            animation: animation,
+                            builder: (context, child) => Opacity(
+                              opacity: 1 - animation.value,
+                              child: child,
+                            ),
+                            child: previousChild,
+                          ),
+                        ),
                       ),
-                      child: EmptyWidget(
-                          key: _getKey(first),
-                          child: widget.builder(context, first)),
+                    ),
+                  ),
+                CustomAnimatedSize(
+                  key: const ValueKey(0),
+                  clipBehavior: clipBehavior,
+                  duration: sizeDuration ?? duration,
+                  curve: sizeCurve,
+                  alignment: stackAlignment,
+                  child: AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, _) => Opacity(
+                      opacity: animation.value,
+                      child: child,
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          AnimatedBuilder(
-            key: _animatedSizeKey,
-            animation: _sizeAnimation,
-            builder: (context, child) => Transform.scale(
-              scale: 1.0 + (widget.highlightScale - 1.0) * _sizeAnimation.value,
-              child: child,
-            ),
-            child: CustomAnimatedSize(
-              clipBehavior: widget.clipBehavior,
-              duration: widget.sizeDuration ?? widget.duration,
-              curve: widget.sizeCurve,
-              alignment: widget.stackAlignment,
-              child: AnimatedBuilder(
-                animation: _opacityAnimation,
-                builder: (context, child) => Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: child,
-                ),
-                child: EmptyWidget(
-                    key: _getKey(current),
-                    child: widget.builder(context, current)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+          );
+        });
   }
-
-  _LocalKey<T> _getKey(T value) => _LocalKey(_stateKey, value, _equals);
-
-  bool _equals(T t1, T t2) => widget.equals(t1, t2);
-}
-
-class _LocalKey<T> extends GlobalKey {
-  final Key stateKey;
-  final T value;
-  final bool Function(T t1, T t2) equals;
-
-  const _LocalKey(this.stateKey, this.value, this.equals) : super.constructor();
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _LocalKey<T> &&
-          runtimeType == other.runtimeType &&
-          stateKey == other.stateKey &&
-          equals(value, other.value);
-
-  // Because of the customizable equals method, the hashcode of value cannot
-  // be used here without the risk of a falsely unequal hashcode.
-  @override
-  int get hashCode => stateKey.hashCode;
 }
