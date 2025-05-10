@@ -1,11 +1,10 @@
-<a href="https://pub.dev/packages/cross_fade"><img src="https://img.shields.io/pub/v/cross_fade.svg?style=flat?logo=dart" alt="pub.dev"></a>
-<a href="https://github.com/SplashByte/cross_fade"><img src="https://img.shields.io/static/v1?label=platform&message=flutter&color=1ebbfd" alt="github"></a>
+[![pub.dev](https://img.shields.io/pub/v/cross_fade.svg?style=flat?logo=dart)](https://pub.dev/packages/cross_fade)
+[![github](https://img.shields.io/static/v1?label=platform&message=flutter&color=1ebbfd)](https://github.com/splashbyte/cross_fade)
 [![likes](https://img.shields.io/pub/likes/cross_fade)](https://pub.dev/packages/cross_fade/score)
-[![popularity](https://img.shields.io/pub/popularity/cross_fade)](https://pub.dev/packages/cross_fade/score)
+[![downloads](https://img.shields.io/pub/dm/cross_fade)](https://pub.dev/packages/cross_fade/score)
 [![pub points](https://img.shields.io/pub/points/cross_fade)](https://pub.dev/packages/cross_fade/score)
-<a href="https://github.com/SplashByte/cross_fade/blob/main/LICENSE"><img src="https://img.shields.io/github/license/SplashByte/cross_fade.svg" alt="license"></a>
-
-[![buy me a coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/splashbyte)
+[![license](https://img.shields.io/github/license/splashbyte/cross_fade.svg)](https://github.com/splashbyte/cross_fade/blob/main/LICENSE)
+[![buy me a coffee](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee)](https://www.buymeacoffee.com/splashbyte)
 
 ### If you like this package, please leave a like there on [pub.dev](https://pub.dev/packages/cross_fade) and star on [GitHub](https://github.com/SplashByte/cross_fade).
 
