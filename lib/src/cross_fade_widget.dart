@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'widgets/animated_size.dart';
 import 'widgets/clip_rect.dart';
 
-/// A widget to apply a crossfade animation
+/// A widget to apply a cross fade animation
 /// between different states and/or widgets.
 class CrossFade<T> extends StatelessWidget {
   /// The current value.
@@ -42,7 +42,7 @@ class CrossFade<T> extends StatelessWidget {
   /// Curve of the fading in animation.
   final Curve curve;
 
-  /// Curve of the fading out animation. Defaults to [curve.flipped].
+  /// Curve of the fading out animation. Defaults to [curve].
   final Curve? disappearingCurve;
 
   /// Curve of the highlighting animation.
@@ -102,8 +102,7 @@ class CrossFade<T> extends StatelessWidget {
         highlightTransition: highlightTransition,
         highlightScale: highlightScale,
         highlightDuration: highlightDuration,
-        curve: curve,
-        disappearingCurve: disappearingCurve,
+        curve: Curves.linear,
         highlightingCurve: highlightingCurve,
         highlightingReverseCurve: highlightingReverseCurve,
         transitionBuilder:
@@ -127,11 +126,12 @@ class CrossFade<T> extends StatelessWidget {
                           constraints: constraints,
                           child: AnimatedBuilder(
                             animation: animation,
-                            builder: (context, child) => Opacity(
-                              opacity: 1 - animation.value,
-                              child: child,
+                            builder: (context, _) => Opacity(
+                              opacity: 1 -
+                                  (disappearingCurve ?? curve)
+                                      .transform(animation.value),
+                              child: previousChild,
                             ),
-                            child: previousChild,
                           ),
                         ),
                       ),
@@ -146,7 +146,7 @@ class CrossFade<T> extends StatelessWidget {
                   child: AnimatedBuilder(
                     animation: animation,
                     builder: (context, _) => Opacity(
-                      opacity: animation.value,
+                      opacity: curve.transform(animation.value),
                       child: child,
                     ),
                   ),

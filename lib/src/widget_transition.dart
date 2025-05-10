@@ -32,9 +32,6 @@ class WidgetTransition<T> extends StatefulWidget {
   /// Curve of the fading in animation.
   final Curve curve;
 
-  /// Curve of the fading out animation. Defaults to [curve.flipped].
-  final Curve? disappearingCurve;
-
   /// Curve of the highlighting animation.
   final Curve highlightingCurve;
 
@@ -66,7 +63,6 @@ class WidgetTransition<T> extends StatefulWidget {
     this.highlightScale = 1.2,
     this.highlightDuration,
     this.curve = Curves.easeIn,
-    this.disappearingCurve,
     this.highlightingCurve = Curves.ease,
     this.highlightingReverseCurve,
     required this.transitionBuilder,
@@ -83,7 +79,7 @@ class WidgetTransition<T> extends StatefulWidget {
 class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
     with TickerProviderStateMixin {
   late final List<T> _todo;
-  late final AnimationController _opacityController;
+  late final AnimationController _transitionController;
   late final AnimationController _sizeController;
   late final CurvedAnimation _transitionAnimation;
   late final CurvedAnimation _highlightingAnimation;
@@ -93,7 +89,7 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
   void initState() {
     super.initState();
     _todo = [widget.value];
-    _opacityController =
+    _transitionController =
         AnimationController(vsync: this, duration: widget.duration, value: 1.0)
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed) {
@@ -117,9 +113,8 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
       });
 
     _transitionAnimation = CurvedAnimation(
-      parent: _opacityController,
+      parent: _transitionController,
       curve: widget.curve,
-      reverseCurve: widget.disappearingCurve,
     );
 
     _highlightingAnimation = CurvedAnimation(
@@ -131,7 +126,7 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
 
   @override
   void dispose() {
-    _opacityController.dispose();
+    _transitionController.dispose();
     _sizeController.dispose();
     super.dispose();
   }
@@ -145,14 +140,14 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
       } else {
         _todo[_todo.length - 1] = widget.value;
       }
-      if (!_opacityController.isAnimating) {
+      if (!_transitionController.isAnimating) {
         _animateNext();
       }
     } else {
       _todo[_todo.length - 1] = widget.value;
     }
     if (oldWidget.duration != widget.duration) {
-      _opacityController.duration = widget.duration;
+      _transitionController.duration = widget.duration;
     }
     if (oldWidget.highlightDuration != widget.highlightDuration) {
       _sizeController.duration =
@@ -160,9 +155,6 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
     }
     if (oldWidget.curve != widget.curve) {
       _transitionAnimation.curve = widget.curve;
-    }
-    if (oldWidget.disappearingCurve != widget.disappearingCurve) {
-      _transitionAnimation.reverseCurve = widget.disappearingCurve;
     }
     if (oldWidget.highlightingCurve != widget.highlightingCurve) {
       _highlightingAnimation.curve = widget.highlightingCurve;
@@ -177,7 +169,7 @@ class _WidgetTransitionState<T> extends State<WidgetTransition<T>>
     if (widget.highlightTransition.call(_todo[0], _todo[1])) {
       _sizeController.forward();
     }
-    _opacityController.forward(from: 0.0);
+    _transitionController.forward(from: 0.0);
   }
 
   @override

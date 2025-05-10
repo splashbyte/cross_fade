@@ -1,5 +1,8 @@
+## 0.5.0 [2025-05-10]
+- BREAKING: removes `disappearingCurve` from `WidgetTransition` and fixes `disappearingCurve` in `CrossFade`
+
 ## 0.4.0 [2024-02-02]
-- introduces ``WidgetTransition`` for fully customizable transitions
+- introduces `WidgetTransition` for fully customizable transitions
 
 ## 0.3.1 [2022-02-26]
 - fixes alignment

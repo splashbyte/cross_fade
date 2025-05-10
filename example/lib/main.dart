@@ -63,6 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
       width: 300.0,
       child: const Center(child: Text('Any other other widget')),
     ),
+    const SizedBox(),
   ];
   int _index = 0;
   late final Timer _timer;
@@ -70,8 +71,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(
-        const Duration(milliseconds: 1500), (t) => setState(() => _index++));
+    _timer = Timer.periodic(const Duration(milliseconds: 350), (t) {
+      if (t.tick < 10) setState(() => _index++);
+    });
   }
 
   @override
@@ -122,6 +124,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 value: _index,
                 builder: (context, i) => _widgets[i % _widgets.length],
               ),
+            ),
+          ),
+          Center(
+            child: CrossFade<int>(
+              value: _index,
+              builder: (context, i) => _widgets[i % _widgets.length],
             ),
           ),
           Center(
